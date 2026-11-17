@@ -26,7 +26,7 @@ def geheim(naam):
 
 
 def status(r):
-    if r is None:
+    if r is None or r != r:  # None of NaN = niet meetbaar
         return "– n.v.t."
     if r >= 1:
         return "✅ goed"

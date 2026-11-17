@@ -53,7 +53,7 @@ ONZEKER_SPREIDING = 2    # verschil hoogste - laagste >= 2 punten -> "onzeker"
 TEMPERATUUR = 0.0        # zo reproduceerbaar mogelijk; de 5 runs meten de variatie die overblijft
 MAX_TEKST_LLM = 12000   # aantal tekens paginatekst naar het taalmodel (rest wordt afgekapt en gemeld)
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.8-flash"
 CLAUDE_MODEL = "claude-sonnet-5-5"
 
 PAGINATYPES = {

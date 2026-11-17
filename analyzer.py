@@ -254,16 +254,22 @@ def analyseer(data: dict) -> dict:
                          "Geef de pagina een eigen titel die de inhoud beschrijft.", w))
 
     imgs = soup.find_all("img")
-    if imgs:
-        met_alt = sum(1 for i in imgs if (i.get("alt") or "").strip())
-        aandeel = met_alt / len(imgs)
-        res, meting = (1.0 if aandeel >= C.ALT_TEKST_MINIMUM else 0.0), f"{met_alt} van {len(imgs)} ({aandeel:.0%})"
+    # alt="" is volgens WCAG de juiste manier om een afbeelding als versiering te markeren:
+    # die tellen we niet mee. Fout = geen alt-attribuut. Goed = alt met tekst.
+    met_tekst = sum(1 for i in imgs if (i.get("alt") or "").strip())
+    versiering = sum(1 for i in imgs if i.has_attr("alt") and not (i.get("alt") or "").strip())
+    zonder_alt = len(imgs) - met_tekst - versiering
+    inhoudelijk = met_tekst + zonder_alt
+    if inhoudelijk:
+        aandeel = met_tekst / inhoudelijk
+        res = 1.0 if aandeel >= C.ALT_TEKST_MINIMUM else 0.0
+        meting = f"{met_tekst} van {inhoudelijk} met beschrijving ({aandeel:.0%}); {versiering} als versiering gemarkeerd (alt=\"\")"
     else:
-        res, meting = None, "geen afbeeldingen (niet meetbaar)"
+        res, meting = None, (f"alleen versiering ({versiering} afbeeldingen met alt=\"\")" if imgs else "geen afbeeldingen (niet meetbaar)")
     checks.append(_check("alt", O, "Alt-tekst", "telt mee", "Sterk", res, meting,
-                         f"minstens {C.ALT_TEKST_MINIMUM:.0%} van de afbeeldingen",
+                         f"minstens {C.ALT_TEKST_MINIMUM:.0%} van de niet-decoratieve afbeeldingen",
                          "Google noemt alt-tekst het belangrijkste kenmerk om een afbeelding te begrijpen.",
-                         f"{GSC} (z.d.-e); W3C (2023)", "Geef afbeeldingen een korte beschrijving in het alt-attribuut."))
+                         f"{GSC} (z.d.-e); W3C (2023)", "Geef inhoudelijke afbeeldingen een korte beschrijving (alt-tekst); geef pure versiering alt=\"\"."))
 
     intern = 0
     extern_hoofd = 0
@@ -398,7 +404,7 @@ def analyseer(data: dict) -> dict:
 
     linkteksten = " ".join((a.get("href", "") + " " + a.get_text(" ")) for a in soup.find_all("a", href=True)).lower()
     volledige = soup.get_text(" ")
-    wie = bool(re.search(r"over-ons|over ons|about|wie-zijn-wij|wie zijn wij|organisatie", linkteksten)) \
+    wie = bool(re.search(r"\bover[- ]|about|wie-zijn-wij|wie zijn wij|organisatie|colofon|missie", linkteksten)) \
         or any(t in types for t in ("Organization", "LocalBusiness", "Corporation", "GovernmentOrganization", "NGO")) \
         or bool(re.search(r"\bkvk\b|kamer van koophandel", volledige, re.I))
     contact = bool(re.search(r"contact|mailto:|tel:", linkteksten)) \
