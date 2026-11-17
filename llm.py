@@ -166,7 +166,23 @@ def _json(tekst: str) -> dict:
     return json.loads(m.group(0))
 
 
-def vraag(prompt: str, aanbieder: str, api_key: str, model: str) -> dict:
+TIJDELIJK = ("503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "overloaded", "high demand", "529")
+
+
+def vraag(prompt: str, aanbieder: str, api_key: str, model: str, pogingen: int = 4) -> dict:
+    """Vraagt het model; bij een tijdelijke drukte-fout (503/429) wacht hij even en probeert opnieuw."""
+    import time
+    for poging in range(pogingen):
+        try:
+            return _vraag(prompt, aanbieder, api_key, model)
+        except Exception as e:
+            tijdelijk = any(t.lower() in str(e).lower() for t in TIJDELIJK)
+            if not tijdelijk or poging == pogingen - 1:
+                raise
+            time.sleep([5, 15, 30][min(poging, 2)])
+
+
+def _vraag(prompt: str, aanbieder: str, api_key: str, model: str) -> dict:
     if aanbieder == "Gemini":
         from google import genai
         from google.genai import types
