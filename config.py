@@ -6,7 +6,7 @@ Leg elke wijziging en de reden vast in het rapport.
 """
 
 METHODE_VERSIE = "2.0"
-PROMPT_VERSIE = "2.0"
+PROMPT_VERSIE = "2.1"
 
 # ---------------------------------------------------------------------------
 # Totaalscore (hoofdstuk 7)

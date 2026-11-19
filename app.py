@@ -186,7 +186,8 @@ if res:
                 st.warning(f"De tekst was langer dan {C.MAX_TEKST_LLM} tekens; alleen het begin is beoordeeld.")
             for kk, v in b["punten"].items():
                 p = PUNTEN[kk]
-                kop = f"**{p['naam']}**: {v['mediaan'] if v['mediaan'] is not None else '–'}/5"
+                m = v["mediaan"]
+                kop = f"**{p['naam']}**: {'–' if m is None else (int(m) if m == int(m) else m)}/5"
                 if v["onzeker"]:
                     kop += " · ⚠️ onzeker"
                 st.markdown(kop)

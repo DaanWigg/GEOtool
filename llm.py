@@ -37,10 +37,11 @@ PUNTEN = {
     },
     "bronnen": {
         "naam": "Bronnen",
-        "vraag": "Verwijst de tekst naar bronnen, onderzoek of experts om beweringen te onderbouwen?",
+        "vraag": ("Worden concrete beweringen in de tekst onderbouwd met een bron, onderzoek of expert? Een lijst met "
+                  "partners, logo's of organisatienamen zonder koppeling aan een bewering telt NIET als bron."),
         "1": "Geen enkele verwijzing naar een bron of expert.",
         "3": "Af en toe wordt een organisatie of expert genoemd, maar zonder duidelijke bron.",
-        "5": "Belangrijke beweringen worden onderbouwd met genoemde bronnen, onderzoek of experts.",
+        "5": "Belangrijke beweringen worden onderbouwd met een genoemde bron, zoals 'volgens de NHG-richtlijn...' of 'uit onderzoek van het RIVM blijkt...'.",
         "bron": "Aggarwal et al. (2024)",
     },
     "duidelijkheid": {
@@ -110,6 +111,7 @@ Punten, met voorbeelden per cijfer:
 
 Regels:
 - De lengte van de tekst is NIET belangrijk. Een lange tekst is niet beter dan een korte.
+- Wees streng: geef een 5 alleen als de pagina het voorbeeld bij 5 echt waarmaakt.
 - Geef bij elk cijfer als bewijs een LETTERLIJK stukje tekst van de pagina (maximaal 25 woorden), precies
   zoals het in de paginatekst hieronder staat. Verander er niets aan. Verzin geen bewijs.
 - Geef bij elk cijfer een toelichting van maximaal 2 zinnen.
