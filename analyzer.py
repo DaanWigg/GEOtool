@@ -392,10 +392,21 @@ def analyseer(data: dict) -> dict:
     if ai.get("status") is None:
         res, meting = 0.0, f"geen antwoord: {ai.get('fout', '')[:80]}"
     else:
-        challenge = bool(CHALLENGE.search(ai["html"][:20000]))
+        # Alleen naar de ZICHTBARE pagina kijken (titel + tekst), niet naar scripts:
+        # veel sites laden bijv. reCAPTCHA voor een formulier, dat is geen blokkade.
+        ai_soup = BeautifulSoup(ai["html"], "html.parser")
+        ai_titel = ai_soup.title.get_text(" ", strip=True) if ai_soup.title else ""
+        ai_tekst = re.sub(r"\s+", " ", (_zonder_ruis(ai_soup).body or _zonder_ruis(ai_soup)).get_text(" "))
+        ai_woorden = len(ai_tekst.split())
+        challenge = bool(CHALLENGE.search(ai_titel)) or (bool(CHALLENGE.search(ai_tekst[:3000])) and ai_woorden < 0.5 * max(ruwe_woorden, 1))
+        veel_minder = ruwe_woorden >= 100 and ai_woorden < 0.3 * ruwe_woorden
         geweigerd = ai["status"] in (401, 403, 429, 503)
-        res = 0.0 if (geweigerd or challenge) else 1.0
-        meting = f"status {ai['status']}" + (", beveiligingspagina gevonden" if challenge else "")
+        res = 0.0 if (geweigerd or challenge or veel_minder) else 1.0
+        meting = f"status {ai['status']}, {ai_woorden} woorden zichtbaar voor AI-robot"
+        if challenge:
+            meting += ", beveiligingspagina gevonden"
+        elif veel_minder:
+            meting += f" (normaal {ruwe_woorden}): pagina grotendeels afgeschermd"
     checks.append(_check("robots_niet_geblokkeerd", O, "Robots niet geblokkeerd", "telt mee", "Sterk", res, meting,
                          "AI-zoekrobot krijgt de pagina (status 200, geen beveiligingspagina)",
                          "Een beveiligingspagina houdt de robot net zo goed tegen als robots.txt.",
