@@ -6,6 +6,7 @@ Starten:  streamlit run app.py
 import io
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
@@ -50,6 +51,8 @@ with st.sidebar:
     runs = st.slider("Aantal beoordelingen door de AI", 1, 5, C.AANTAL_RUNS,
                      help="De methode schrijft 5 voor. Minder is sneller en goedkoper om te testen.")
     snelheid = st.checkbox("Snelheid meten (Google PageSpeed, ±30 sec.)", value=C.PAGESPEED_AAN)
+    met_advies = st.checkbox("Verbeteradvies laten schrijven", value=True,
+                             help="Uitzetten scheelt tijd tijdens de test. De scores en de CSV veranderen niet.")
     ps_key = geheim("PAGESPEED_API_KEY")
     st.caption(f"Methode v{C.METHODE_VERSIE} · prompt v{C.PROMPT_VERSIE} · totaal = "
                f"{C.GEWICHT_SEO:.0%} SEO + {C.GEWICHT_GEO_TECHNIEK:.0%} GEO-techniek + {C.GEWICHT_GEO_INHOUD:.0%} GEO-inhoud")
@@ -92,8 +95,9 @@ if start and url:
                     balk.progress(klaar / totaal, text=tekst)
                 beoordeling = beoordeel(analyse, paginatype, aanbieder, api_key, model, runs, voortgang)
                 balk.empty()
-                with st.spinner("De AI schrijft verbeteradvies..."):
-                    adv = advies(analyse, paginatype, beoordeling, aanbieder, api_key, model)
+                if met_advies:
+                    with st.spinner("De AI schrijft verbeteradvies..."):
+                        adv = advies(analyse, paginatype, beoordeling, aanbieder, api_key, model)
             except Exception as e:
                 llm_fout = f"Fout bij het taalmodel: {e}"
 
@@ -106,7 +110,7 @@ if start and url:
            "basis_ok": basis_ok(analyse["checks"])}
     st.session_state.laatste = res
     st.session_state.historie.append({
-        "datum": datetime.now().strftime("%Y-%m-%d %H:%M"), "url": data["url"], "paginatype": paginatype,
+        "datum": datetime.now(ZoneInfo("Europe/Amsterdam")).strftime("%Y-%m-%d %H:%M"), "url": data["url"], "paginatype": paginatype,
         "basis_ok": res["basis_ok"], "seo": seo, "geo_techniek": geo_t, "geo_inhoud": geo_i,
         "totaal": res["scores"]["Totaal"], **gevoeligheid(analyse["checks"], geo_i),
         **{f"check_{c['id']}": c["resultaat"] for c in analyse["checks"]},
@@ -140,6 +144,8 @@ if res:
 
     with t_adv:
         adv = res["advies"]
+        if not adv and res["beoordeling"]:
+            st.caption("Het AI-advies is voor deze analyse overgeslagen (vinkje in de zijbalk).")
         if adv:
             st.caption("🤖 Geschreven door AI, controleer dit voordat je het uitvoert.")
             st.write(adv.get("samenvatting", ""))
