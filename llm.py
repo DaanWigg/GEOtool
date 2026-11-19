@@ -14,7 +14,6 @@ import json
 import re
 import statistics
 import unicodedata
-from concurrent.futures import ThreadPoolExecutor
 
 import config as C
 
@@ -181,14 +180,14 @@ def vraag(prompt: str, aanbieder: str, api_key: str, model: str, pogingen: int =
             tijdelijk = any(t.lower() in str(e).lower() for t in TIJDELIJK)
             if not tijdelijk or poging == pogingen - 1:
                 raise
-            time.sleep([5, 15, 30][min(poging, 2)])
+            time.sleep([10, 30, 60][min(poging, 2)])
 
 
 def _vraag(prompt: str, aanbieder: str, api_key: str, model: str) -> dict:
     if aanbieder == "Gemini":
         from google import genai
         from google.genai import types
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=120_000))
         r = client.models.generate_content(
             model=model, contents=prompt,
             config=types.GenerateContentConfig(system_instruction=SYSTEEM, temperature=C.TEMPERATUUR,
@@ -206,18 +205,20 @@ def _vraag(prompt: str, aanbieder: str, api_key: str, model: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def beoordeel(analyse: dict, paginatype: str, aanbieder: str, api_key: str, model: str,
-              runs: int = C.AANTAL_RUNS) -> dict:
+              runs: int = C.AANTAL_RUNS, voortgang=None) -> dict:
     prompt = beoordelingsprompt(analyse, paginatype)
     tekst_norm = _norm(analyse["tekst"][:C.MAX_TEKST_LLM] + " " + analyse["kern"]["titel"] + " " + analyse["kern"]["h1"])
 
-    def een_run(_):
+    resultaten = []
+    for i in range(runs):  # na elkaar, zodat we de gratis limiet per minuut niet overschrijden
+        if voortgang:
+            voortgang(i, runs)
         try:
-            return vraag(prompt, aanbieder, api_key, model)
+            resultaten.append(vraag(prompt, aanbieder, api_key, model))
         except Exception as e:  # een mislukte run telt niet mee
-            return {"fout": str(e)}
-
-    with ThreadPoolExecutor(max_workers=min(runs, 5)) as ex:
-        resultaten = list(ex.map(een_run, range(runs)))
+            resultaten.append({"fout": str(e)})
+    if voortgang:
+        voortgang(runs, runs)
 
     mislukt = [r["fout"] for r in resultaten if "fout" in r]
     if len(mislukt) == runs:

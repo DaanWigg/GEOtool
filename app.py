@@ -85,8 +85,13 @@ if start and url:
             llm_fout = "Geen API-sleutel ingevuld: de AI-beoordeling en het advies zijn overgeslagen."
         else:
             try:
-                with st.spinner(f"De AI beoordeelt de tekst ({runs}x)..."):
-                    beoordeling = beoordeel(analyse, paginatype, aanbieder, api_key, model, runs)
+                balk = st.progress(0.0, text=f"De AI beoordeelt de tekst: beoordeling 1 van {runs}...")
+                def voortgang(klaar, totaal):
+                    tekst = (f"De AI beoordeelt de tekst: beoordeling {klaar + 1} van {totaal}... "
+                             "(bij drukte wacht de tool even en probeert opnieuw)") if klaar < totaal else "Beoordeling klaar."
+                    balk.progress(klaar / totaal, text=tekst)
+                beoordeling = beoordeel(analyse, paginatype, aanbieder, api_key, model, runs, voortgang)
+                balk.empty()
                 with st.spinner("De AI schrijft verbeteradvies..."):
                     adv = advies(analyse, paginatype, beoordeling, aanbieder, api_key, model)
             except Exception as e:
