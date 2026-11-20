@@ -43,7 +43,7 @@ DESCRIPTION_WAARSCHUWING = (50, 170)
 
 # Snelheid via Google PageSpeed Insights (Core Web Vitals, veldgegevens).
 # Zonder veldgegevens (vaak bij kleine sites) telt de check niet mee: "niet meetbaar".
-PAGESPEED_AAN = True
+PAGESPEED_AAN = False   # standaard uit: zo zijn alle analyses gelijk en loop je geen limiet op
 
 # ---------------------------------------------------------------------------
 # AI-beoordeling (hoofdstuk 6)

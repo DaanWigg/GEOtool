@@ -177,6 +177,9 @@ def vraag(prompt: str, aanbieder: str, api_key: str, model: str, pogingen: int =
         try:
             return _vraag(prompt, aanbieder, api_key, model)
         except Exception as e:
+            if "perday" in str(e).lower().replace(" ", ""):
+                raise RuntimeError("De gratis daglimiet van het taalmodel is bereikt. Ga morgen verder; "
+                                   "er worden geen kosten gemaakt.") from e
             tijdelijk = any(t.lower() in str(e).lower() for t in TIJDELIJK)
             if not tijdelijk or poging == pogingen - 1:
                 raise

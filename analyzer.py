@@ -154,12 +154,28 @@ def _zonder_ruis(soup: BeautifulSoup) -> BeautifulSoup:
 
 
 def hoofdtekst(soup: BeautifulSoup) -> str:
-    """Zichtbare tekst van de hoofdinhoud (zonder menu, header en footer)."""
+    """
+    Zichtbare tekst van de hoofdinhoud (zonder menu, header, footer en zijbalk).
+    We nemen <main> of het grootste <article>, maar alleen als dat minstens de helft
+    van de paginatekst bevat. Anders (bijv. een klein teaser-blok) nemen we de hele body.
+    """
     s = _zonder_ruis(soup)
-    hoofd = s.find("main") or s.find("article") or s.body or s
-    for tag in hoofd.find_all(["nav", "header", "footer", "aside"]):
+    for tag in s.find_all(["nav", "header", "footer", "aside", "form"]):
         tag.decompose()
-    return re.sub(r"\s+", " ", hoofd.get_text(" ")).strip()
+    body = s.body or s
+
+    def tekst(el):
+        return re.sub(r"\s+", " ", el.get_text(" ")).strip()
+
+    body_tekst = tekst(body)
+    n_body = len(body_tekst.split())
+    kandidaten = [el for el in [s.find("main")] + s.find_all("article") if el is not None]
+    if kandidaten:
+        beste = max(kandidaten, key=lambda el: len(tekst(el).split()))
+        beste_tekst = tekst(beste)
+        if len(beste_tekst.split()) >= 0.5 * n_body:
+            return beste_tekst
+    return body_tekst
 
 
 def _jsonld(soup):

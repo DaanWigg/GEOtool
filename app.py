@@ -116,6 +116,8 @@ if start and url:
         **{f"check_{c['id']}": c["resultaat"] for c in analyse["checks"]},
         **({f"ai_{k}": v["mediaan"] for k, v in beoordeling["punten"].items()} if beoordeling else {}),
         "ai_onzeker": sum(v["onzeker"] for v in beoordeling["punten"].values()) if beoordeling else None,
+        "woorden_hoofdtekst": analyse["kern"]["woorden"],
+        "ai_mislukte_runs": beoordeling["mislukte_runs"] if beoordeling else None,
         "model": res["model"], "methode": C.METHODE_VERSIE, "prompt": C.PROMPT_VERSIE,
     })
 
